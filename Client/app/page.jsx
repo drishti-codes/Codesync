@@ -11,20 +11,12 @@ import { ProfilePage } from "@/components/profile-page"
 import { SettingsPage } from "@/components/settings-page"
 import { RoomsPage } from "@/components/rooms-page"
 
-type View = "auth" | "dashboard" | "editor"
-type Tab = "dashboard" | "rooms" | "history" | "settings" | "profile"
-
-interface RoomData {
-  id: string
-  name: string
-  language: string
-}
-
 export default function Home() {
-  const [view, setView] = useState<View>("auth")
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard")
+  const [view, setView] = useState("auth")
+  const [activeTab, setActiveTab] = useState("dashboard")
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [currentRoom, setCurrentRoom] = useState<RoomData | null>(null)
+  const [currentRoom, setCurrentRoom] = useState(null)
+
   const userName = "Arjun"
 
   const handleLogin = useCallback(() => {
@@ -37,22 +29,24 @@ export default function Home() {
     setCurrentRoom(null)
   }, [])
 
-  const handleJoinRoom = useCallback((roomId: string) => {
+  const handleJoinRoom = useCallback((roomId) => {
     // Mock room data - in real app, this would come from API
     setCurrentRoom({
       id: roomId,
       name: "Algorithm Practice",
       language: "JavaScript",
     })
+
     setView("editor")
   }, [])
 
-  const handleCreateRoom = useCallback((roomData: { name: string; language: string }) => {
+  const handleCreateRoom = useCallback((roomData) => {
     const newRoom = {
       id: Date.now().toString(),
       name: roomData.name,
       language: roomData.language,
     }
+
     setCurrentRoom(newRoom)
     setShowCreateModal(false)
     setView("editor")
@@ -86,10 +80,10 @@ export default function Home() {
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as Tab)}
+        onTabChange={(tab) => setActiveTab(tab)}
         onLogout={handleLogout}
       />
-      
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top navbar */}
@@ -101,7 +95,7 @@ export default function Home() {
           onSettingsClick={() => setActiveTab("settings")}
           onJoinRoom={handleJoinRoom}
         />
-        
+
         {/* Page content */}
         {activeTab === "dashboard" ? (
           <DashboardContent
@@ -119,7 +113,7 @@ export default function Home() {
           <SettingsPage />
         ) : null}
       </div>
-      
+
       {/* Create Room Modal */}
       <CreateRoomModal
         isOpen={showCreateModal}

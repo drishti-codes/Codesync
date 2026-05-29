@@ -1,15 +1,9 @@
 "use client"
 
 import { StatsCards } from "./stats-cards"
-import { RecentRooms, Room } from "./room-card"
+import { RecentRooms } from "./room-card"
 
-interface DashboardContentProps {
-  userName: string
-  onJoinRoom: (roomId: string) => void
-  onViewAllRooms: () => void
-}
-
-const mockRooms: Room[] = [
+const mockRooms = [
   {
     id: "1",
     name: "Algorithm Practice",
@@ -69,12 +63,18 @@ const mockStats = {
 
 function getGreeting() {
   const hour = new Date().getHours()
+
   if (hour < 12) return "Good morning"
   if (hour < 18) return "Good afternoon"
+
   return "Good evening"
 }
 
-export function DashboardContent({ userName, onJoinRoom, onViewAllRooms }: DashboardContentProps) {
+export function DashboardContent({
+  userName,
+  onJoinRoom,
+  onViewAllRooms,
+}) {
   return (
     <div className="flex-1 overflow-auto p-6 space-y-8">
       {/* Greeting */}
@@ -82,16 +82,21 @@ export function DashboardContent({ userName, onJoinRoom, onViewAllRooms }: Dashb
         <h1 className="text-3xl font-bold text-foreground">
           {getGreeting()}, {userName}
         </h1>
+
         <p className="text-muted-foreground mt-1">
           Here&apos;s what&apos;s happening with your coding sessions
         </p>
       </div>
-      
+
       {/* Stats */}
       <StatsCards stats={mockStats} />
-      
+
       {/* Recent Rooms */}
-      <RecentRooms rooms={mockRooms} onJoinRoom={onJoinRoom} onViewAll={onViewAllRooms} />
+      <RecentRooms
+        rooms={mockRooms}
+        onJoinRoom={onJoinRoom}
+        onViewAll={onViewAllRooms}
+      />
     </div>
   )
 }

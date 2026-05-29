@@ -2,21 +2,20 @@
 
 import { useState, useMemo } from "react"
 import { ChevronDown } from "lucide-react"
-import { RoomCard, Room } from "./room-card"
+
+import { RoomCard } from "./room-card"
 import { cn } from "@/lib/utils"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
 import { Button } from "@/components/ui/button"
 
-interface RoomsPageProps {
-  onJoinRoom: (roomId: string) => void
-}
-
-const allRooms: Room[] = [
+const allRooms = [
   {
     id: "1",
     name: "Algorithm Practice",
@@ -99,22 +98,38 @@ const allRooms: Room[] = [
   },
 ]
 
-type StatusFilter = "all" | "live" | "saved"
+const languages = [
+  "All Languages",
+  "JavaScript",
+  "Python",
+  "C++",
+  "Java",
+  "TypeScript",
+  "Go",
+]
 
-const languages = ["All Languages", "JavaScript", "Python", "C++", "Java", "TypeScript", "Go"]
+export function RoomsPage({ onJoinRoom }) {
+  const [statusFilter, setStatusFilter] = useState("all")
 
-export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
-  const [languageFilter, setLanguageFilter] = useState("All Languages")
+  const [languageFilter, setLanguageFilter] =
+    useState("All Languages")
 
   const filteredRooms = useMemo(() => {
     return allRooms.filter((room) => {
       // Status filter
-      if (statusFilter === "live" && !room.isLive) return false
-      if (statusFilter === "saved" && room.isLive) return false
+      if (statusFilter === "live" && !room.isLive)
+        return false
+
+      if (statusFilter === "saved" && room.isLive)
+        return false
 
       // Language filter
-      if (languageFilter !== "All Languages" && room.language !== languageFilter) return false
+      if (
+        languageFilter !== "All Languages" &&
+        room.language !== languageFilter
+      ) {
+        return false
+      }
 
       return true
     })
@@ -124,7 +139,10 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
     <div className="flex-1 overflow-auto p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">All Rooms</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          All Rooms
+        </h1>
+
         <p className="text-muted-foreground mt-1">
           Browse and join all your coding rooms
         </p>
@@ -134,7 +152,7 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
       <div className="flex flex-wrap items-center gap-4">
         {/* Status Filter Pills */}
         <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg">
-          {(["all", "live", "saved"] as StatusFilter[]).map((status) => (
+          {["all", "live", "saved"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -145,7 +163,11 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
                   : "text-muted-foreground hover:text-foreground hover:bg-card"
               )}
             >
-              {status === "all" ? "All" : status === "live" ? "Live" : "Saved"}
+              {status === "all"
+                ? "All"
+                : status === "live"
+                ? "Live"
+                : "Saved"}
             </button>
           ))}
         </div>
@@ -158,17 +180,23 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
               className="border-border bg-secondary hover:bg-card min-w-[160px] justify-between"
             >
               {languageFilter}
+
               <ChevronDown className="w-4 h-4 ml-2 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-[160px] bg-card border-border">
+
+          <DropdownMenuContent
+            align="start"
+            className="w-[160px] bg-card border-border"
+          >
             {languages.map((lang) => (
               <DropdownMenuItem
                 key={lang}
                 onClick={() => setLanguageFilter(lang)}
                 className={cn(
                   "cursor-pointer",
-                  languageFilter === lang && "bg-primary/10 text-primary"
+                  languageFilter === lang &&
+                    "bg-primary/10 text-primary"
                 )}
               >
                 {lang}
@@ -179,7 +207,8 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
 
         {/* Results count */}
         <span className="text-sm text-muted-foreground">
-          {filteredRooms.length} room{filteredRooms.length !== 1 ? "s" : ""} found
+          {filteredRooms.length} room
+          {filteredRooms.length !== 1 ? "s" : ""} found
         </span>
       </div>
 
@@ -187,7 +216,11 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
       {filteredRooms.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredRooms.map((room) => (
-            <RoomCard key={room.id} room={room} onJoin={onJoinRoom} />
+            <RoomCard
+              key={room.id}
+              room={room}
+              onJoin={onJoinRoom}
+            />
           ))}
         </div>
       ) : (
@@ -195,7 +228,11 @@ export function RoomsPage({ onJoinRoom }: RoomsPageProps) {
           <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
             <span className="text-2xl">🔍</span>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">No rooms found</h3>
+
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            No rooms found
+          </h3>
+
           <p className="text-muted-foreground">
             Try adjusting your filters to find more rooms
           </p>
