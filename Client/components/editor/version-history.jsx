@@ -1,26 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, RotateCcw, Clock, User } from "lucide-react"
+import { X, RotateCcw, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-interface Version {
-  id: string
-  timestamp: string
-  userName: string
-  userColor: string
-  description: string
-  linesChanged: number
-}
-
-interface VersionHistoryProps {
-  isOpen: boolean
-  onClose: () => void
-  onRestore: (versionId: string) => void
-}
-
-const mockVersions: Version[] = [
+const mockVersions = [
   {
     id: "v6",
     timestamp: "Just now",
@@ -71,8 +56,8 @@ const mockVersions: Version[] = [
   },
 ]
 
-export function VersionHistory({ isOpen, onClose, onRestore }: VersionHistoryProps) {
-  const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
+export function VersionHistory({ isOpen, onClose, onRestore }) {
+  const [selectedVersion, setSelectedVersion] = useState(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -90,11 +75,11 @@ export function VersionHistory({ isOpen, onClose, onRestore }: VersionHistoryPro
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className={cn(
         "fixed top-0 right-0 h-full w-96 bg-card border-l border-border z-50 transform transition-transform duration-300",
@@ -113,13 +98,13 @@ export function VersionHistory({ isOpen, onClose, onRestore }: VersionHistoryPro
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         {/* Timeline */}
         <div className="p-4 h-[calc(100%-56px)] overflow-y-auto">
           <div className="relative">
             {/* Timeline line */}
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-            
+
             <div className="space-y-4">
               {mockVersions.map((version, index) => (
                 <div
@@ -134,18 +119,18 @@ export function VersionHistory({ isOpen, onClose, onRestore }: VersionHistoryPro
                   )}
                 >
                   {/* Timeline dot */}
-                  <div 
+                  <div
                     className={cn(
                       "absolute left-2.5 top-2 w-3 h-3 rounded-full border-2 border-card transition-all",
                       index === 0 ? "bg-success" : "bg-border group-hover:bg-primary"
                     )}
                     style={index === 0 ? {} : { backgroundColor: selectedVersion === version.id ? version.userColor : undefined }}
                   />
-                  
+
                   <div className={cn(
                     "p-4 rounded-xl border transition-all",
-                    selectedVersion === version.id 
-                      ? "bg-secondary border-primary/50" 
+                    selectedVersion === version.id
+                      ? "bg-secondary border-primary/50"
                       : "bg-card border-border hover:border-primary/30"
                   )}>
                     {/* Header */}
@@ -165,18 +150,18 @@ export function VersionHistory({ isOpen, onClose, onRestore }: VersionHistoryPro
                         {version.timestamp}
                       </span>
                     </div>
-                    
+
                     {/* Description */}
                     <p className="text-sm text-foreground mb-2">
                       {version.description}
                     </p>
-                    
+
                     {/* Stats */}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="text-success">+{Math.floor(version.linesChanged * 0.7)} lines</span>
                       <span className="text-destructive">-{Math.floor(version.linesChanged * 0.3)} lines</span>
                     </div>
-                    
+
                     {/* Restore button */}
                     {selectedVersion === version.id && index !== 0 && (
                       <Button
@@ -191,7 +176,7 @@ export function VersionHistory({ isOpen, onClose, onRestore }: VersionHistoryPro
                         Restore this version
                       </Button>
                     )}
-                    
+
                     {index === 0 && (
                       <div className="mt-2 flex items-center gap-1 text-xs text-success">
                         <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse-live" />

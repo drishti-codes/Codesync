@@ -12,38 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-interface User {
-  id: string
-  name: string
-  color: string
-  isAdmin?: boolean
-  isOnline?: boolean
-}
-
-interface Message {
-  id: string
-  userId: string
-  userName: string
-  userColor: string
-  content: string
-  timestamp: string
-}
-
-interface Activity {
-  id: string
-  type: "edit" | "join" | "leave" | "file"
-  userName: string
-  userColor: string
-  content: string
-  timestamp: string
-}
-
-interface CollabPanelProps {
-  users: User[]
-  currentUserId: string
-}
-
-const mockMessages: Message[] = [
+const mockMessages = [
   {
     id: "1",
     userId: "1",
@@ -78,7 +47,7 @@ const mockMessages: Message[] = [
   },
 ]
 
-const mockActivities: Activity[] = [
+const mockActivities = [
   {
     id: "1",
     type: "edit",
@@ -121,24 +90,24 @@ const mockActivities: Activity[] = [
   },
 ]
 
-export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
-  const [activeTab, setActiveTab] = useState<"chat" | "users" | "activity">("chat")
+export function CollabPanel({ users, currentUserId }) {
+  const [activeTab, setActiveTab] = useState("chat")
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState(mockMessages)
-  const [typingUsers, setTypingUsers] = useState<string[]>(["Sarah"])
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const [typingUsers, setTypingUsers] = useState(["Sarah"])
+  const chatEndRef = useRef(null)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = (e) => {
     e.preventDefault()
     if (!message.trim()) return
-    
+
     const currentUser = users.find(u => u.id === currentUserId)
     if (!currentUser) return
-    
+
     setMessages([
       ...messages,
       {
@@ -166,7 +135,7 @@ export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+            onClick={() => setActiveTab(tab.id)}
             className={cn(
               "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
               activeTab === tab.id
@@ -181,7 +150,7 @@ export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
           </button>
         ))}
       </div>
-      
+
       {/* Content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === "chat" && (
@@ -213,7 +182,7 @@ export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
               ))}
               <div ref={chatEndRef} />
             </div>
-            
+
             {/* Typing indicator */}
             {typingUsers.length > 0 && (
               <div className="px-4 py-2 text-xs text-muted-foreground">
@@ -227,7 +196,7 @@ export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
                 </span>
               </div>
             )}
-            
+
             {/* Input */}
             <form onSubmit={handleSendMessage} className="p-4 border-t border-border">
               <div className="flex gap-2">
@@ -256,7 +225,7 @@ export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
             </form>
           </>
         )}
-        
+
         {activeTab === "users" && (
           <div className="p-4 space-y-2">
             {users.map((user) => (
@@ -309,12 +278,12 @@ export function CollabPanel({ users, currentUserId }: CollabPanelProps) {
             ))}
           </div>
         )}
-        
+
         {activeTab === "activity" && (
           <div className="p-4 space-y-3">
             {mockActivities.map((activity) => {
-              const Icon = activity.type === "edit" 
-                ? FileCode 
+              const Icon = activity.type === "edit"
+                ? FileCode
                 : activity.type === "join"
                 ? LogIn
                 : activity.type === "leave"

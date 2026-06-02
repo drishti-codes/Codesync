@@ -7,6 +7,7 @@ import { TopNavbar } from "@/components/top-navbar"
 import { DashboardContent } from "@/components/dashboard-content"
 import { CreateRoomModal } from "@/components/create-room-modal"
 import { EditorPage } from "@/components/editor/editor-page"
+import { InterviewEditorPage } from "@/components/editor/interview-editor-page"
 import { ProfilePage } from "@/components/profile-page"
 import { SettingsPage } from "@/components/settings-page"
 import { RoomsPage } from "@/components/rooms-page"
@@ -30,13 +31,12 @@ export default function Home() {
   }, [])
 
   const handleJoinRoom = useCallback((roomId) => {
-    // Mock room data - in real app, this would come from API
     setCurrentRoom({
       id: roomId,
       name: "Algorithm Practice",
       language: "JavaScript",
+      type: "collaboration", // default
     })
-
     setView("editor")
   }, [])
 
@@ -44,12 +44,19 @@ export default function Home() {
     const newRoom = {
       id: Date.now().toString(),
       name: roomData.name,
-      language: roomData.language,
+      language: roomData.language || "JavaScript",
+      type: roomData.type, // "collaboration" ya "interview"
     }
 
     setCurrentRoom(newRoom)
     setShowCreateModal(false)
-    setView("editor")
+
+    // ✅ Type ke hisaab se alag view
+    if (roomData.type === "interview") {
+      setView("interview")
+    } else {
+      setView("editor")
+    }
   }, [])
 
   const handleLeaveRoom = useCallback(() => {
@@ -62,7 +69,7 @@ export default function Home() {
     return <AuthPage onLogin={handleLogin} />
   }
 
-  // Editor view
+  // Collaborative Editor view
   if (view === "editor" && currentRoom) {
     return (
       <EditorPage
@@ -74,7 +81,19 @@ export default function Home() {
     )
   }
 
-  // Dashboard view with sidebar
+  // ✅ Interview Editor view
+  if (view === "interview" && currentRoom) {
+    return (
+      <InterviewEditorPage
+        roomId={currentRoom.id}
+        roomName={currentRoom.name}
+        role="interviewer"
+        onEnd={handleLeaveRoom}
+      />
+    )
+  }
+
+  // Dashboard view
   return (
     <div className="h-screen flex bg-background">
       {/* Sidebar */}
@@ -84,9 +103,9 @@ export default function Home() {
         onLogout={handleLogout}
       />
 
-      {/* Main content area */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top navbar */}
+        {/* Top Navbar */}
         <TopNavbar
           userName={userName}
           showJoinRoom={activeTab === "dashboard"}

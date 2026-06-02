@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { 
   Play, 
   Share2, 
@@ -9,10 +8,6 @@ import {
   MoreHorizontal,
   Copy,
   ExternalLink,
-  Download,
-  Lock,
-  Unlock,
-  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,18 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-interface EditorNavbarProps {
-  roomName: string
-  users: { id: string; name: string; color: string }[]
-  isRunning: boolean
-  isDarkTheme: boolean
-  shareMessage?: string | null
-  onRun: () => void
-  onShare: () => void
-  onToggleTheme: () => void
-  onLeave: () => void
-}
 
 export function EditorNavbar({
   roomName,
@@ -44,7 +27,7 @@ export function EditorNavbar({
   onShare,
   onToggleTheme,
   onLeave,
-}: EditorNavbarProps) {
+}) {
   return (
     <header className="h-12 bg-card border-b border-border px-4 flex items-center justify-between">
       {/* Left side */}
@@ -56,9 +39,9 @@ export function EditorNavbar({
           </div>
           <span className="font-semibold text-foreground hidden sm:block">CodeSync</span>
         </div>
-        
+
         <div className="h-6 w-px bg-border" />
-        
+
         {/* Room name */}
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground">{roomName}</span>
@@ -68,7 +51,7 @@ export function EditorNavbar({
           </span>
         </div>
       </div>
-      
+
       {/* Right side */}
       <div className="flex items-center gap-3">
         {/* Connected users */}
@@ -89,7 +72,7 @@ export function EditorNavbar({
             </div>
           )}
         </div>
-        
+
         {/* Share button */}
         <div className="relative">
           <Button
@@ -107,7 +90,7 @@ export function EditorNavbar({
             </div>
           )}
         </div>
-        
+
         {/* Run button */}
         <Button
           size="sm"
@@ -118,7 +101,7 @@ export function EditorNavbar({
           <Play className={`w-4 h-4 mr-2 ${isRunning ? "animate-pulse" : ""}`} />
           {isRunning ? "Running..." : "Run"}
         </Button>
-        
+
         {/* Theme toggle */}
         <button
           onClick={onToggleTheme}
@@ -126,7 +109,7 @@ export function EditorNavbar({
         >
           {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-        
+
         {/* More options */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

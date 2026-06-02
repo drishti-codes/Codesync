@@ -1,22 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
-import Editor, { OnMount } from "@monaco-editor/react"
-import type { editor } from "monaco-editor"
-
-interface Cursor {
-  userId: string
-  userName: string
-  color: string
-  position: { lineNumber: number; column: number }
-}
-
-interface CodeEditorProps {
-  language: string
-  code: string
-  onChange: (value: string) => void
-  cursors: Cursor[]
-}
+import Editor from "@monaco-editor/react"
 
 const defaultCode = `// Welcome to CodeSync!
 // Start coding collaboratively with your team
@@ -46,14 +31,12 @@ const { name, skills } = user;
 console.log(\`\${name} knows: \${skills.join(", ")}\`);
 `
 
-export function CodeEditor({ language, code, onChange, cursors }: CodeEditorProps) {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
-  const [decorations, setDecorations] = useState<string[]>([])
+export function CodeEditor({ language, code, onChange, cursors }) {
+  const editorRef = useRef(null)
+  const [decorations, setDecorations] = useState([])
 
-  const handleEditorMount: OnMount = (editor) => {
+  const handleEditorMount = (editor) => {
     editorRef.current = editor
-    
-    // Add cursor decorations
     updateCursorDecorations()
   }
 
@@ -100,7 +83,7 @@ export function CodeEditor({ language, code, onChange, cursors }: CodeEditorProp
           </div>
         ))}
       </div>
-      
+
       {/* File tabs */}
       <div className="h-9 bg-[#1e1e1e] border-b border-border flex items-center px-2">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-card border-t-2 border-t-primary rounded-t text-sm text-foreground">
@@ -113,7 +96,7 @@ export function CodeEditor({ language, code, onChange, cursors }: CodeEditorProp
           <span>App.jsx</span>
         </div>
       </div>
-      
+
       <Editor
         height="calc(100% - 36px)"
         language={language.toLowerCase()}
@@ -142,7 +125,7 @@ export function CodeEditor({ language, code, onChange, cursors }: CodeEditorProp
           },
         }}
       />
-      
+
       {/* Custom cursor styles */}
       <style jsx global>{`
         ${cursors.map(

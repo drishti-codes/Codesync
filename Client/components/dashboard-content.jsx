@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { StatsCards } from "./stats-cards"
 import { RecentRooms } from "./room-card"
 
@@ -11,6 +12,7 @@ const mockRooms = [
     usersOnline: 3,
     lastActive: "2 min ago",
     isLive: true,
+    type: "collaboration",
   },
   {
     id: "2",
@@ -19,6 +21,7 @@ const mockRooms = [
     usersOnline: 5,
     lastActive: "5 min ago",
     isLive: true,
+    type: "collaboration",
   },
   {
     id: "3",
@@ -27,6 +30,7 @@ const mockRooms = [
     usersOnline: 0,
     lastActive: "2 hours ago",
     isLive: false,
+    type: "collaboration",
   },
   {
     id: "4",
@@ -35,6 +39,7 @@ const mockRooms = [
     usersOnline: 2,
     lastActive: "1 hour ago",
     isLive: true,
+    type: "collaboration",
   },
   {
     id: "5",
@@ -43,6 +48,7 @@ const mockRooms = [
     usersOnline: 0,
     lastActive: "1 day ago",
     isLive: false,
+    type: "collaboration",
   },
   {
     id: "6",
@@ -51,6 +57,7 @@ const mockRooms = [
     usersOnline: 1,
     lastActive: "30 min ago",
     isLive: true,
+    type: "collaboration",
   },
 ]
 
@@ -63,10 +70,8 @@ const mockStats = {
 
 function getGreeting() {
   const hour = new Date().getHours()
-
   if (hour < 12) return "Good morning"
   if (hour < 18) return "Good afternoon"
-
   return "Good evening"
 }
 
@@ -74,7 +79,32 @@ export function DashboardContent({
   userName,
   onJoinRoom,
   onViewAllRooms,
+  onCreateRoom,
 }) {
+  const router = useRouter()
+
+  const handleJoinRoom = (room) => {
+    if (room.type === "interview") {
+      router.push(`/interview/${room.id}`)
+    } else {
+      router.push(`/room/${room.id}`)
+    }
+    onJoinRoom?.(room)
+  }
+
+  const handleCreateRoom = (roomData) => {
+    // Naya room ka fake ID generate karo (baad mein backend se aayega)
+    const newRoomId = Date.now().toString()
+
+    if (roomData.type === "interview") {
+      router.push(`/interview/${newRoomId}`)
+    } else {
+      router.push(`/room/${newRoomId}`)
+    }
+
+    onCreateRoom?.(roomData)
+  }
+
   return (
     <div className="flex-1 overflow-auto p-6 space-y-8">
       {/* Greeting */}
@@ -82,7 +112,6 @@ export function DashboardContent({
         <h1 className="text-3xl font-bold text-foreground">
           {getGreeting()}, {userName}
         </h1>
-
         <p className="text-muted-foreground mt-1">
           Here&apos;s what&apos;s happening with your coding sessions
         </p>
@@ -94,7 +123,7 @@ export function DashboardContent({
       {/* Recent Rooms */}
       <RecentRooms
         rooms={mockRooms}
-        onJoinRoom={onJoinRoom}
+        onJoinRoom={handleJoinRoom}
         onViewAll={onViewAllRooms}
       />
     </div>

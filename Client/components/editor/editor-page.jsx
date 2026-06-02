@@ -8,13 +8,6 @@ import { CollabPanel } from "./collab-panel"
 import { OutputPanel } from "./output-panel"
 import { VersionHistory } from "./version-history"
 
-interface EditorPageProps {
-  roomId: string
-  roomName: string
-  language: string
-  onLeave: () => void
-}
-
 const mockUsers = [
   { id: "1", name: "Arjun", color: "#e85d75", isAdmin: true, isOnline: true },
   { id: "2", name: "Sarah", color: "#60a5fa", isOnline: true },
@@ -27,26 +20,25 @@ const mockCursors = [
   { userId: "3", userName: "Mike", color: "#34d399", position: { lineNumber: 15, column: 22 } },
 ]
 
-export function EditorPage({ roomId, roomName, language, onLeave }: EditorPageProps) {
+export function EditorPage({ roomId, roomName, language, onLeave }) {
   const [code, setCode] = useState("")
   const [output, setOutput] = useState("")
-  const [errors, setErrors] = useState<string[]>([])
+  const [errors, setErrors] = useState([])
   const [isRunning, setIsRunning] = useState(false)
   const [isDarkTheme, setIsDarkTheme] = useState(true)
   const [activeIcon, setActiveIcon] = useState("explorer")
   const [showVersionHistory, setShowVersionHistory] = useState(false)
-  const [runtime, setRuntime] = useState<string | undefined>()
-  const [memory, setMemory] = useState<string | undefined>()
+  const [runtime, setRuntime] = useState(undefined)
+  const [memory, setMemory] = useState(undefined)
+  const [shareMessage, setShareMessage] = useState(null)
 
   const handleRunCode = useCallback(async () => {
     setIsRunning(true)
     setOutput("")
     setErrors([])
-    
-    // Simulate code execution
+
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Mock output
+
     setOutput(`Fibonacci(10) = 55
 Doubled: [2, 4, 6, 8, 10]
 Arjun knows: JavaScript, Python, React`)
@@ -55,24 +47,20 @@ Arjun knows: JavaScript, Python, React`)
     setIsRunning(false)
   }, [])
 
-  const [shareMessage, setShareMessage] = useState<string | null>(null)
-
   const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/room/${roomId}`
     try {
       await navigator.clipboard.writeText(shareUrl)
       setShareMessage("Link copied!")
     } catch {
-      // Clipboard API blocked in iframe - show the URL instead
       setShareMessage(`Share: ${shareUrl}`)
     }
     setTimeout(() => setShareMessage(null), 3000)
   }, [roomId])
 
-  const handleRestoreVersion = useCallback((versionId: string) => {
+  const handleRestoreVersion = useCallback((versionId) => {
     console.log("Restoring version:", versionId)
     setShowVersionHistory(false)
-    // Would restore code from version here
   }, [])
 
   return (
@@ -89,7 +77,7 @@ Arjun knows: JavaScript, Python, React`)
         onToggleTheme={() => setIsDarkTheme(!isDarkTheme)}
         onLeave={onLeave}
       />
-      
+
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
@@ -97,7 +85,7 @@ Arjun knows: JavaScript, Python, React`)
           activeIcon={activeIcon}
           onIconChange={setActiveIcon}
         />
-        
+
         {/* Editor area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Code Editor */}
@@ -107,7 +95,7 @@ Arjun knows: JavaScript, Python, React`)
             onChange={setCode}
             cursors={mockCursors}
           />
-          
+
           {/* Output Panel */}
           <OutputPanel
             output={output}
@@ -118,14 +106,14 @@ Arjun knows: JavaScript, Python, React`)
             onRun={handleRunCode}
           />
         </div>
-        
+
         {/* Right Collab Panel */}
         <CollabPanel
           users={mockUsers}
           currentUserId="1"
         />
       </div>
-      
+
       {/* Version History Drawer */}
       <VersionHistory
         isOpen={showVersionHistory}

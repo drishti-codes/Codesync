@@ -14,17 +14,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface OutputPanelProps {
-  output: string
-  errors: string[]
-  runtime?: string
-  memory?: string
-  isRunning: boolean
-  onRun: () => void
-}
-
-export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun }: OutputPanelProps) {
-  const [activeTab, setActiveTab] = useState<"output" | "errors" | "terminal" | "stdin">("output")
+export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun }) {
+  const [activeTab, setActiveTab] = useState("output")
   const [isExpanded, setIsExpanded] = useState(true)
   const [stdinValue, setStdinValue] = useState("")
 
@@ -57,14 +48,14 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
             <Play className={cn("w-4 h-4", isRunning && "animate-pulse")} />
             {isRunning ? "Running..." : "Run Code"}
           </button>
-          
+
           <div className="h-5 w-px bg-border mx-2" />
-          
+
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => {
-                setActiveTab(tab.id as typeof activeTab)
+                setActiveTab(tab.id)
                 setIsExpanded(true)
               }}
               className={cn(
@@ -91,7 +82,7 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
             </button>
           ))}
         </div>
-        
+
         <div className="flex items-center gap-4">
           {/* Stats */}
           {(runtime || memory) && (
@@ -110,7 +101,7 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
               )}
             </div>
           )}
-          
+
           {/* Toggle */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -120,7 +111,7 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
           </button>
         </div>
       </div>
-      
+
       {/* Content */}
       {isExpanded && (
         <div className="h-[calc(100%-40px)] overflow-auto">
@@ -138,7 +129,7 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
               )}
             </div>
           )}
-          
+
           {activeTab === "errors" && (
             <div className="p-4 font-mono text-sm space-y-2">
               {errors.length > 0 ? (
@@ -153,7 +144,7 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
               )}
             </div>
           )}
-          
+
           {activeTab === "terminal" && (
             <div className="p-4 font-mono text-sm">
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -161,11 +152,12 @@ export function OutputPanel({ output, errors, runtime, memory, isRunning, onRun 
                 <span>Terminal</span>
               </div>
               <div className="text-foreground">
-                <span className="text-success">$</span> <span className="text-muted-foreground">Ready for input...</span>
+                <span className="text-success">$</span>{" "}
+                <span className="text-muted-foreground">Ready for input...</span>
               </div>
             </div>
           )}
-          
+
           {activeTab === "stdin" && (
             <div className="p-4">
               <textarea
