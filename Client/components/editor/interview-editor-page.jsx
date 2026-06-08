@@ -13,12 +13,12 @@ import {
   Tag,
   SkipForward,
   Share2,
-  Copy,
   Check
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CodeEditor } from "./code-editor"
 import { OutputPanel } from "./output-panel"
+import { ProblemSelectModal } from "./problem-select-modal"
 import { cn } from "@/lib/utils"
 
 const mockProblem = {
@@ -65,6 +65,7 @@ const hints = [
 const TOTAL_TIME = 45 * 60
 
 export function InterviewEditorPage({ roomId, roomName, role = "interviewer", onEnd }) {
+  const [currentProblem, setCurrentProblem] = useState(mockProblem)
   const [code, setCode] = useState(mockProblem.starterCode["JavaScript"])
   const [language, setLanguage] = useState("JavaScript")
   const [output, setOutput] = useState("")
@@ -79,13 +80,13 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
   const [activeTab, setActiveTab] = useState("chat")
   const [hintsRevealed, setHintsRevealed] = useState(0)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
+  const [showProblemModal, setShowProblemModal] = useState(false)
   const [runtime, setRuntime] = useState(undefined)
   const [memory, setMemory] = useState(undefined)
   const [linkCopied, setLinkCopied] = useState(false)
 
   const isInterviewer = role === "interviewer"
 
-  // Timer countdown
   useEffect(() => {
     if (!isTimerRunning) return
     if (timeLeft <= 0) {
@@ -136,7 +137,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
     setNewMessage("")
   }
 
-  // ✅ Share link handler
   const handleShareLink = useCallback(async () => {
     const candidateLink = `${window.location.origin}/interview/join/${roomId}`
     try {
@@ -144,10 +144,25 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 3000)
     } catch {
-      // Fallback — alert se dikhao
       alert(`Share this link with candidate:\n${candidateLink}`)
     }
   }, [roomId])
+
+  // ✅ Fix: topics → tags normalize karo
+  const handleProblemSelect = useCallback((problem) => {
+    setCurrentProblem({
+      ...problem,
+      tags: problem.tags || problem.topics || [],
+      examples: problem.examples || [],
+      constraints: problem.constraints || [],
+    })
+    const starterCode = problem.starterCode?.[language]
+      || `// Solve: ${problem.title}\n\n`
+    setCode(starterCode)
+    setHintsRevealed(0)
+    setOutput("")
+    setErrors([])
+  }, [language])
 
   const difficultyColor = {
     Easy: "text-green-400 bg-green-400/10",
@@ -160,7 +175,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
 
       {/* ── Top Bar ── */}
       <header className="h-12 bg-card border-b border-border px-4 flex items-center justify-between shrink-0">
-        {/* Left */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-primary" />
@@ -178,7 +192,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
           </span>
         </div>
 
-        {/* Center — Timer */}
         <div className="flex items-center gap-3">
           <div className={cn("flex items-center gap-2 font-mono text-lg font-bold", timerColor)}>
             <Clock className="w-4 h-4" />
@@ -194,9 +207,7 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
           )}
         </div>
 
-        {/* Right */}
         <div className="flex items-center gap-2">
-          {/* ✅ Share Link Button — interviewer only */}
           {isInterviewer && (
             <button
               onClick={handleShareLink}
@@ -208,22 +219,16 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
               )}
             >
               {linkCopied ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  Link Copied!
-                </>
+                <><Check className="w-3.5 h-3.5" />Link Copied!</>
               ) : (
-                <>
-                  <Share2 className="w-3.5 h-3.5" />
-                  Share Link
-                </>
+                <><Share2 className="w-3.5 h-3.5" />Share Link</>
               )}
             </button>
           )}
 
           {isInterviewer && (
             <button
-              onClick={() => {}}
+              onClick={() => setShowProblemModal(true)}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors"
             >
               <SkipForward className="w-3.5 h-3.5" />
@@ -247,22 +252,21 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
         {/* ── Column 1: Problem Statement (25%) ── */}
         <div className="w-[25%] border-r border-border flex flex-col overflow-hidden bg-card">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Title + Difficulty */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-bold text-foreground text-base">
-                  {mockProblem.title}
+                  {currentProblem.title}
                 </h2>
                 <span className={cn(
                   "text-xs px-2 py-0.5 rounded-full font-medium",
-                  difficultyColor[mockProblem.difficulty]
+                  difficultyColor[currentProblem.difficulty]
                 )}>
-                  {mockProblem.difficulty}
+                  {currentProblem.difficulty}
                 </span>
               </div>
-              {/* Tags */}
+              {/* ✅ Fix: tags || topics || [] */}
               <div className="flex flex-wrap gap-1.5">
-                {mockProblem.tags.map(tag => (
+                {(currentProblem.tags || currentProblem.topics || []).map(tag => (
                   <span
                     key={tag}
                     className="flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-secondary text-muted-foreground"
@@ -274,14 +278,12 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
               </div>
             </div>
 
-            {/* Description */}
             <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-              {mockProblem.description}
+              {currentProblem.description}
             </p>
 
-            {/* Examples */}
             <div className="space-y-3">
-              {mockProblem.examples.map((ex, i) => (
+              {(currentProblem.examples || []).map((ex, i) => (
                 <div key={i} className="rounded-lg bg-secondary p-3 text-xs space-y-1">
                   <p className="font-medium text-foreground">Example {i + 1}:</p>
                   <p className="text-muted-foreground">
@@ -299,24 +301,27 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
               ))}
             </div>
 
-            {/* Constraints */}
-            <div>
-              <p className="text-xs font-medium text-foreground mb-2">Constraints:</p>
-              <ul className="space-y-1">
-                {mockProblem.constraints.map((c, i) => (
-                  <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                    <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 text-primary" />
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {(currentProblem.constraints || []).length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-foreground mb-2">Constraints:</p>
+                <ul className="space-y-1">
+                  {(currentProblem.constraints || []).map((c, i) => (
+                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 text-primary" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
-          {/* Change Problem — interviewer only */}
           {isInterviewer && (
             <div className="p-3 border-t border-border">
-              <button className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                onClick={() => setShowProblemModal(true)}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <SkipForward className="w-4 h-4" />
                 Change Problem
               </button>
@@ -326,17 +331,16 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
 
         {/* ── Column 2: Code Editor + Output (50%) ── */}
         <div className="w-[50%] flex flex-col overflow-hidden">
-          {/* Language selector */}
           <div className="h-9 bg-[#1e1e1e] border-b border-border flex items-center px-3 gap-2 shrink-0">
             <select
               value={language}
               onChange={(e) => {
                 setLanguage(e.target.value)
-                setCode(mockProblem.starterCode[e.target.value] || "")
+                setCode(currentProblem.starterCode?.[e.target.value] || `// Solve: ${currentProblem.title}\n\n`)
               }}
               className="bg-transparent text-sm text-muted-foreground focus:outline-none cursor-pointer"
             >
-              {Object.keys(mockProblem.starterCode).map(lang => (
+              {["JavaScript", "Python", "Java"].map(lang => (
                 <option key={lang} value={lang} className="bg-[#1e1e1e]">
                   {lang}
                 </option>
@@ -349,7 +353,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
             )}
           </div>
 
-          {/* Editor */}
           <div className={cn(
             "flex-1 overflow-hidden",
             isInterviewer && "pointer-events-none opacity-90"
@@ -362,7 +365,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
             />
           </div>
 
-          {/* Output */}
           <OutputPanel
             output={output}
             errors={errors}
@@ -375,7 +377,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
 
         {/* ── Column 3: Chat + Hints + Notes (25%) ── */}
         <div className="w-[25%] border-l border-border flex flex-col overflow-hidden bg-card">
-          {/* Tabs */}
           <div className="flex border-b border-border shrink-0">
             {[
               { id: "chat", label: "Chat", icon: Users },
@@ -402,7 +403,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
           </div>
 
           <div className="flex-1 overflow-hidden flex flex-col">
-            {/* Chat Tab */}
             {activeTab === "chat" && (
               <>
                 <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -445,7 +445,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
               </>
             )}
 
-            {/* Hints Tab */}
             {activeTab === "hints" && (
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {isInterviewer ? (
@@ -493,7 +492,6 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
               </div>
             )}
 
-            {/* Notes Tab */}
             {activeTab === "notes" && (
               <div className="flex-1 p-3">
                 <textarea
@@ -542,6 +540,14 @@ export function InterviewEditorPage({ roomId, roomName, role = "interviewer", on
           </div>
         </div>
       )}
+
+      {/* ── Problem Select Modal ── */}
+      <ProblemSelectModal
+        isOpen={showProblemModal}
+        onClose={() => setShowProblemModal(false)}
+        onSelect={handleProblemSelect}
+        currentProblemId={currentProblem.id}
+      />
     </div>
   )
 }

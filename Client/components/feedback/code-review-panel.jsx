@@ -13,6 +13,7 @@ const commentTypes = [
 
 export function CodeReviewPanel({ code, language }) {
   const editorRef = useRef(null)
+  const hoverTimeoutRef = useRef(null)  // ✅ timeout ref
   const [comments, setComments] = useState([])
   const [activeCommentLine, setActiveCommentLine] = useState(null)
   const [commentText, setCommentText] = useState("")
@@ -23,17 +24,32 @@ export function CodeReviewPanel({ code, language }) {
   const handleEditorMount = (editor, monaco) => {
     editorRef.current = editor
 
-    // Hover pe line number detect karo
     editor.onMouseMove((e) => {
+      // ✅ Pehle se chal raha timeout cancel karo
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+      }
       if (e.target.position) {
         setHoveredLine(e.target.position.lineNumber)
       }
     })
 
     editor.onMouseLeave(() => {
-      setHoveredLine(null)
+      // ✅ 400ms baad null karo — "+" pe jaane ka time mile
+      hoverTimeoutRef.current = setTimeout(() => {
+        setHoveredLine(null)
+      }, 400)
     })
   }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Decorations update karo jab bhi comments change hon
   useEffect(() => {
@@ -65,6 +81,10 @@ export function CodeReviewPanel({ code, language }) {
   }, [comments])
 
   const handleAddComment = (lineNumber) => {
+    // ✅ Timeout clear karo jab "+" click ho
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+    }
     setActiveCommentLine(lineNumber)
     setCommentText("")
     setCommentType("good")
@@ -122,7 +142,20 @@ export function CodeReviewPanel({ code, language }) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Line numbers + comment indicators */}
-        <div className="w-8 bg-[#1e1e1e] flex flex-col shrink-0 overflow-hidden relative">
+        <div
+          className="w-8 bg-[#1e1e1e] flex flex-col shrink-0 overflow-hidden relative"
+          // ✅ "+" button pe hover karne pe timeout cancel karo
+          onMouseEnter={() => {
+            if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current)
+            }
+          }}
+          onMouseLeave={() => {
+            hoverTimeoutRef.current = setTimeout(() => {
+              setHoveredLine(null)
+            }, 400)
+          }}
+        >
           {Array.from({ length: totalLines }, (_, i) => {
             const lineNum = i + 1
             const lineComments = getLineComments(lineNum)
@@ -138,6 +171,12 @@ export function CodeReviewPanel({ code, language }) {
                 {isHovered && lineComments.length === 0 && (
                   <button
                     onClick={() => handleAddComment(lineNum)}
+                    onMouseEnter={() => {
+                      // ✅ "+" pe mouse aaye toh timeout cancel karo
+                      if (hoverTimeoutRef.current) {
+                        clearTimeout(hoverTimeoutRef.current)
+                      }
+                    }}
                     className="w-4 h-4 rounded-full bg-primary flex items-center justify-center hover:scale-110 transition-transform z-10"
                   >
                     <Plus className="w-2.5 h-2.5 text-primary-foreground" />

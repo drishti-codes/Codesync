@@ -8,6 +8,7 @@ import { DashboardContent } from "@/components/dashboard-content"
 import { CreateRoomModal } from "@/components/create-room-modal"
 import { EditorPage } from "@/components/editor/editor-page"
 import { InterviewEditorPage } from "@/components/editor/interview-editor-page"
+import { FeedbackPage } from "@/components/feedback/feedback-page"
 import { ProfilePage } from "@/components/profile-page"
 import { SettingsPage } from "@/components/settings-page"
 import { RoomsPage } from "@/components/rooms-page"
@@ -35,7 +36,7 @@ export default function Home() {
       id: roomId,
       name: "Algorithm Practice",
       language: "JavaScript",
-      type: "collaboration", // default
+      type: "collaboration",
     })
     setView("editor")
   }, [])
@@ -45,13 +46,12 @@ export default function Home() {
       id: Date.now().toString(),
       name: roomData.name,
       language: roomData.language || "JavaScript",
-      type: roomData.type, // "collaboration" ya "interview"
+      type: roomData.type,
     }
 
     setCurrentRoom(newRoom)
     setShowCreateModal(false)
 
-    // ✅ Type ke hisaab se alag view
     if (roomData.type === "interview") {
       setView("interview")
     } else {
@@ -59,7 +59,17 @@ export default function Home() {
     }
   }, [])
 
+  // ✅ Interview end hone pe feedback page pe jaao
   const handleLeaveRoom = useCallback(() => {
+    if (currentRoom?.type === "interview") {
+      setView("feedback")
+    } else {
+      setCurrentRoom(null)
+      setView("dashboard")
+    }
+  }, [currentRoom])
+
+  const handleFeedbackBack = useCallback(() => {
     setCurrentRoom(null)
     setView("dashboard")
   }, [])
@@ -81,7 +91,7 @@ export default function Home() {
     )
   }
 
-  // ✅ Interview Editor view
+  // Interview Editor view
   if (view === "interview" && currentRoom) {
     return (
       <InterviewEditorPage
@@ -89,6 +99,18 @@ export default function Home() {
         roomName={currentRoom.name}
         role="interviewer"
         onEnd={handleLeaveRoom}
+      />
+    )
+  }
+
+  // ✅ Feedback view
+  if (view === "feedback" && currentRoom) {
+    return (
+      <FeedbackPage
+        roomId={currentRoom.id}
+        roomName={currentRoom.name}
+        role="interviewer"
+        onBack={handleFeedbackBack}
       />
     )
   }
