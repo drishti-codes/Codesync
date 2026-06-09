@@ -49,16 +49,17 @@ export function AuthPage({ onLogin }) {
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-md mb-8">
-              Real-time collaborative coding with your team. Write, run, and debug code together from anywhere in the world.
+              Real-time collaborative coding with your team. Practice mock interviews, write and run code together from anywhere in the world.
             </p>
 
             {/* Feature highlights */}
             <div className="space-y-4">
               {[
-                "Real-time multi-cursor collaboration",
-                "Support for 10+ programming languages",
-                "Instant code execution with Judge0",
-                "Built-in chat and version history",
+                
+  "Real-time multi-cursor collaboration",
+  "Support for 10+ programming languages",
+  "Built-in chat and version history",
+  "Mock interviews with role-based access",
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-success animate-pulse-live" />

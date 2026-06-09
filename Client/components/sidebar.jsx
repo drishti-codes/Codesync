@@ -2,7 +2,8 @@
 
 import { 
   LayoutDashboard, 
-  FolderKanban, 
+  FolderKanban,
+  Trophy,
   LogOut,
   ChevronLeft,
   ChevronRight
@@ -15,6 +16,7 @@ import { useState } from "react"
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "rooms", label: "Rooms", icon: FolderKanban },
+  { id: "interviews", label: "Interviews", icon: Trophy },
 ]
 
 export function Sidebar({ activeTab, onTabChange, onLogout }) {
@@ -35,7 +37,6 @@ export function Sidebar({ activeTab, onTabChange, onLogout }) {
               {"</>"}
             </span>
           </div>
-
           {!collapsed && (
             <span className="text-xl font-bold text-sidebar-foreground">
               CodeSync
@@ -43,7 +44,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }) {
           )}
         </div>
       </div>
-      
+
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
         {menuItems.map((item) => {
@@ -64,24 +65,27 @@ export function Sidebar({ activeTab, onTabChange, onLogout }) {
               <Icon
                 className={cn(
                   "w-5 h-5 shrink-0",
-                  isActive && "text-primary"
+                  isActive && item.id === "interviews"
+                    ? "text-blue-400"
+                    : isActive
+                    ? "text-primary"
+                    : ""
                 )}
               />
-
               {!collapsed && (
-                <span className="font-medium">
-                  {item.label}
-                </span>
+                <span className="font-medium">{item.label}</span>
               )}
-
               {isActive && !collapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse-live" />
+                <div className={cn(
+                  "ml-auto w-1.5 h-1.5 rounded-full animate-pulse-live",
+                  item.id === "interviews" ? "bg-blue-400" : "bg-primary"
+                )} />
               )}
             </button>
           )
         })}
       </nav>
-      
+
       {/* Collapse toggle */}
       <div className="p-3 border-t border-sidebar-border">
         <Button
@@ -97,7 +101,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }) {
           )}
         </Button>
       </div>
-      
+
       {/* Logout */}
       <div className="p-3 border-t border-sidebar-border">
         <button
@@ -108,11 +112,8 @@ export function Sidebar({ activeTab, onTabChange, onLogout }) {
           )}
         >
           <LogOut className="w-5 h-5 shrink-0" />
-
           {!collapsed && (
-            <span className="font-medium">
-              Logout
-            </span>
+            <span className="font-medium">Logout</span>
           )}
         </button>
       </div>

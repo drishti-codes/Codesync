@@ -31,14 +31,22 @@ export default function Home() {
     setCurrentRoom(null)
   }, [])
 
-  const handleJoinRoom = useCallback((roomId) => {
-    setCurrentRoom({
-      id: roomId,
+  const handleJoinRoom = useCallback((room) => {
+    // ✅ room object ya roomId dono handle karo
+    const roomData = typeof room === "object" ? room : {
+      id: room,
       name: "Algorithm Practice",
       language: "JavaScript",
       type: "collaboration",
-    })
-    setView("editor")
+    }
+
+    setCurrentRoom(roomData)
+
+    if (roomData.type === "interview") {
+      setView("interview")
+    } else {
+      setView("editor")
+    }
   }, [])
 
   const handleCreateRoom = useCallback((roomData) => {
@@ -59,7 +67,6 @@ export default function Home() {
     }
   }, [])
 
-  // ✅ Interview end hone pe feedback page pe jaao
   const handleLeaveRoom = useCallback(() => {
     if (currentRoom?.type === "interview") {
       setView("feedback")
@@ -103,7 +110,7 @@ export default function Home() {
     )
   }
 
-  // ✅ Feedback view
+  // Feedback view
   if (view === "feedback" && currentRoom) {
     return (
       <FeedbackPage
@@ -143,11 +150,20 @@ export default function Home() {
             userName={userName}
             onJoinRoom={handleJoinRoom}
             onViewAllRooms={() => setActiveTab("rooms")}
+            onCreateRoom={() => setShowCreateModal(true)}
           />
         ) : activeTab === "rooms" ? (
-          <RoomsPage onJoinRoom={handleJoinRoom} />
-        ) : activeTab === "history" ? (
-          <RoomsPage onJoinRoom={handleJoinRoom} />
+          // ✅ Collaboration rooms only
+          <RoomsPage
+            onJoinRoom={handleJoinRoom}
+            filterType="collaboration"
+          />
+        ) : activeTab === "interviews" ? (
+          // ✅ Interview rooms only
+          <RoomsPage
+            onJoinRoom={handleJoinRoom}
+            filterType="interview"
+          />
         ) : activeTab === "profile" ? (
           <ProfilePage userName={userName} />
         ) : activeTab === "settings" ? (

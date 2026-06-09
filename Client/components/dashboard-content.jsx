@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { StatsCards } from "./stats-cards"
 import { RecentRooms } from "./room-card"
 
@@ -81,30 +80,6 @@ export function DashboardContent({
   onViewAllRooms,
   onCreateRoom,
 }) {
-  const router = useRouter()
-
-  const handleJoinRoom = (room) => {
-    if (room.type === "interview") {
-      router.push(`/interview/${room.id}`)
-    } else {
-      router.push(`/room/${room.id}`)
-    }
-    onJoinRoom?.(room)
-  }
-
-  const handleCreateRoom = (roomData) => {
-    // Naya room ka fake ID generate karo (baad mein backend se aayega)
-    const newRoomId = Date.now().toString()
-
-    if (roomData.type === "interview") {
-      router.push(`/interview/${newRoomId}`)
-    } else {
-      router.push(`/room/${newRoomId}`)
-    }
-
-    onCreateRoom?.(roomData)
-  }
-
   return (
     <div className="flex-1 overflow-auto p-6 space-y-8">
       {/* Greeting */}
@@ -123,8 +98,9 @@ export function DashboardContent({
       {/* Recent Rooms */}
       <RecentRooms
         rooms={mockRooms}
-        onJoinRoom={handleJoinRoom}
+        onJoinRoom={onJoinRoom}
         onViewAll={onViewAllRooms}
+        onCreateRoom={onCreateRoom}
       />
     </div>
   )
