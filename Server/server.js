@@ -22,6 +22,9 @@ app.use("/api/auth", authRoutes)
 const roomRoutes = require("./src/routes/rooms")
 app.use("/api/rooms", roomRoutes)
 
+const codeRoutes = require("./src/routes/code")
+app.use("/api/code", codeRoutes)
+
 // Test route
 app.get("/", (req, res) => {
   res.json({ message: "CodeSync API is running!" })
