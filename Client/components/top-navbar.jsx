@@ -21,6 +21,7 @@ export function TopNavbar({
   onProfileClick,
   onSettingsClick,
   onJoinRoom,
+  onLogout,
 }) {
   const [joinInput, setJoinInput] = useState("")
 
@@ -113,7 +114,7 @@ export function TopNavbar({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="text-destructive cursor-pointer">
+            <DropdownMenuItem onClick={onLogout} className="text-destructive cursor-pointer">
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Github, Chrome } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Github, Chrome, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { signup, login } from "@/lib/api"
 
 export function AuthPage({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true)
@@ -12,10 +13,33 @@ export function AuthPage({ onLogin }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onLogin()
+    setError("")
+    setLoading(true)
+
+    try {
+      let data
+
+      if (isLogin) {
+        data = await login(email, password)
+      } else {
+        data = await signup(name, email, password)
+      }
+
+      // Token aur user data save karo
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+
+      onLogin(data.user)
+    } catch (err) {
+      setError(err.message || "Something went wrong")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -55,11 +79,10 @@ export function AuthPage({ onLogin }) {
             {/* Feature highlights */}
             <div className="space-y-4">
               {[
-                
-  "Real-time multi-cursor collaboration",
-  "Support for 10+ programming languages",
-  "Built-in chat and version history",
-  "Mock interviews with role-based access",
+                "Real-time multi-cursor collaboration",
+                "Support for 10+ programming languages",
+                "Built-in chat and version history",
+                "Mock interviews with role-based access",
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-success animate-pulse-live" />
@@ -125,6 +148,7 @@ export function AuthPage({ onLogin }) {
             <div className="grid grid-cols-2 gap-3 mb-6">
               <Button
                 variant="outline"
+                type="button"
                 className="bg-secondary border-border hover:bg-muted hover:border-primary/50 transition-all"
               >
                 <Chrome className="w-4 h-4 mr-2" />
@@ -133,6 +157,7 @@ export function AuthPage({ onLogin }) {
 
               <Button
                 variant="outline"
+                type="button"
                 className="bg-secondary border-border hover:bg-muted hover:border-primary/50 transition-all"
               >
                 <Github className="w-4 h-4 mr-2" />
@@ -152,6 +177,13 @@ export function AuthPage({ onLogin }) {
               </div>
             </div>
 
+            {/* ✅ Error message */}
+            {error && (
+              <div className="mb-4 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
@@ -169,6 +201,7 @@ export function AuthPage({ onLogin }) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10 bg-secondary border-border focus:border-primary focus:ring-primary"
+                      required={!isLogin}
                     />
                   </div>
                 </div>
@@ -189,6 +222,7 @@ export function AuthPage({ onLogin }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-secondary border-border focus:border-primary focus:ring-primary"
+                    required
                   />
                 </div>
               </div>
@@ -219,6 +253,8 @@ export function AuthPage({ onLogin }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 bg-secondary border-border focus:border-primary focus:ring-primary"
+                    required
+                    minLength={6}
                   />
 
                   <button
@@ -237,11 +273,17 @@ export function AuthPage({ onLogin }) {
 
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground glow-primary transition-all group"
               >
-                {isLogin ? "Sign In" : "Create Account"}
-
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    {isLogin ? "Sign In" : "Create Account"}
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </Button>
             </form>
 
@@ -252,7 +294,10 @@ export function AuthPage({ onLogin }) {
 
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin)
+                  setError("")
+                }}
                 className="text-primary hover:underline font-medium"
               >
                 {isLogin ? "Sign up" : "Sign in"}

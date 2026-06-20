@@ -7,6 +7,7 @@ import { CodeEditor } from "./code-editor"
 import { CollabPanel } from "./collab-panel"
 import { OutputPanel } from "./output-panel"
 import { VersionHistory } from "./version-history"
+import { executeCode } from "@/lib/api"
 
 const mockUsers = [
   { id: "1", name: "Arjun", color: "#e85d75", isAdmin: true, isOnline: true },
@@ -20,8 +21,120 @@ const mockCursors = [
   { userId: "3", userName: "Mike", color: "#34d399", position: { lineNumber: 15, column: 22 } },
 ]
 
+// ✅ Language ke hisaab se default code
+const defaultCodeByLanguage = {
+  JavaScript: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+const result = fibonacci(10);
+console.log("Fibonacci(10) =", result);
+`,
+
+  Python: `# Welcome to CodeSync!
+# Start coding collaboratively with your team
+
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+result = fibonacci(10)
+print("Fibonacci(10) =", result)
+`,
+
+  Java: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+public class Main {
+    static int fibonacci(int n) {
+        if (n <= 1) return n;
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+
+    public static void main(String[] args) {
+        int result = fibonacci(10);
+        System.out.println("Fibonacci(10) = " + result);
+    }
+}
+`,
+
+  "C++": `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+#include <iostream>
+using namespace std;
+
+int fibonacci(int n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+int main() {
+    int result = fibonacci(10);
+    cout << "Fibonacci(10) = " << result << endl;
+    return 0;
+}
+`,
+
+  TypeScript: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+function fibonacci(n: number): number {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+const result: number = fibonacci(10);
+console.log("Fibonacci(10) =", result);
+`,
+
+  Go: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+package main
+
+import "fmt"
+
+func fibonacci(n int) int {
+	if n <= 1 {
+		return n
+	}
+	return fibonacci(n-1) + fibonacci(n-2)
+}
+
+func main() {
+	result := fibonacci(10)
+	fmt.Println("Fibonacci(10) =", result)
+}
+`,
+
+  Rust: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+fn fibonacci(n: u32) -> u32 {
+    if n <= 1 {
+        return n;
+    }
+    fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fn main() {
+    let result = fibonacci(10);
+    println!("Fibonacci(10) = {}", result);
+}
+`,
+}
+
 export function EditorPage({ roomId, roomName, language, onLeave }) {
-  const [code, setCode] = useState("")
+  // ✅ Language ke hisaab se default code select karo
+  const initialCode = defaultCodeByLanguage[language] || defaultCodeByLanguage.JavaScript
+
+  const [code, setCode] = useState(initialCode)
   const [output, setOutput] = useState("")
   const [errors, setErrors] = useState([])
   const [isRunning, setIsRunning] = useState(false)
@@ -37,15 +150,26 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
     setOutput("")
     setErrors([])
 
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const startTime = performance.now()
 
-    setOutput(`Fibonacci(10) = 55
-Doubled: [2, 4, 6, 8, 10]
-Arjun knows: JavaScript, Python, React`)
-    setRuntime("0.023s")
-    setMemory("2.4 MB")
-    setIsRunning(false)
-  }, [])
+    try {
+      const result = await executeCode(code, language)
+      const endTime = performance.now()
+
+      if (result.error) {
+        setErrors([result.error])
+      } else {
+        setOutput(result.output || "(no output)")
+      }
+
+      setRuntime(`${((endTime - startTime) / 1000).toFixed(3)}s`)
+      setMemory("—")
+    } catch (err) {
+      setErrors([err.message || "Execution failed"])
+    } finally {
+      setIsRunning(false)
+    }
+  }, [code, language])
 
   const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/room/${roomId}`

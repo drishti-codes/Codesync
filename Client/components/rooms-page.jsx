@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { ChevronDown, Trophy, Code2 } from "lucide-react"
 import { RoomCard } from "./room-card"
 import { cn } from "@/lib/utils"
@@ -11,129 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-
-const allRooms = [
-  // ✅ Collaboration rooms
-  {
-    id: "1",
-    name: "Algorithm Practice",
-    language: "Python",
-    usersOnline: 3,
-    lastActive: "2 min ago",
-    isLive: true,
-    type: "collaboration",
-  },
-  {
-    id: "2",
-    name: "React Project",
-    language: "TypeScript",
-    usersOnline: 5,
-    lastActive: "5 min ago",
-    isLive: true,
-    type: "collaboration",
-  },
-  {
-    id: "3",
-    name: "Data Structures",
-    language: "Java",
-    usersOnline: 0,
-    lastActive: "2 hours ago",
-    isLive: false,
-    type: "collaboration",
-  },
-  {
-    id: "4",
-    name: "System Design",
-    language: "JavaScript",
-    usersOnline: 2,
-    lastActive: "1 hour ago",
-    isLive: true,
-    type: "collaboration",
-  },
-  {
-    id: "5",
-    name: "Competitive Coding",
-    language: "C++",
-    usersOnline: 0,
-    lastActive: "1 day ago",
-    isLive: false,
-    type: "collaboration",
-  },
-  {
-    id: "6",
-    name: "Backend API",
-    language: "Go",
-    usersOnline: 1,
-    lastActive: "30 min ago",
-    isLive: true,
-    type: "collaboration",
-  },
-  {
-    id: "7",
-    name: "Machine Learning",
-    language: "Python",
-    usersOnline: 0,
-    lastActive: "3 days ago",
-    isLive: false,
-    type: "collaboration",
-  },
-  {
-    id: "8",
-    name: "Frontend Workshop",
-    language: "TypeScript",
-    usersOnline: 4,
-    lastActive: "10 min ago",
-    isLive: true,
-    type: "collaboration",
-  },
-  {
-    id: "9",
-    name: "Database Design",
-    language: "JavaScript",
-    usersOnline: 0,
-    lastActive: "1 week ago",
-    isLive: false,
-    type: "collaboration",
-  },
-  {
-    id: "10",
-    name: "Code Review",
-    language: "Java",
-    usersOnline: 2,
-    lastActive: "15 min ago",
-    isLive: true,
-    type: "collaboration",
-  },
-
-  // ✅ Interview rooms
-  {
-    id: "11",
-    name: "DSA Interview Round",
-    language: "JavaScript",
-    usersOnline: 1,
-    lastActive: "10 min ago",
-    isLive: true,
-    type: "interview",
-  },
-  {
-    id: "12",
-    name: "React Interview Prep",
-    language: "JavaScript",
-    usersOnline: 0,
-    lastActive: "2 hours ago",
-    isLive: false,
-    type: "interview",
-  },
-  {
-    id: "13",
-    name: "System Design Round",
-    language: "JavaScript",
-    usersOnline: 2,
-    lastActive: "30 min ago",
-    isLive: true,
-    type: "interview",
-  },
-]
+import { getRooms } from "@/lib/api"
 
 const languages = [
   "All Languages",
@@ -145,23 +23,62 @@ const languages = [
   "Go",
 ]
 
+// ✅ Backend room ko frontend format mein convert karo
+function formatRoom(room) {
+  const lastActiveDate = new Date(room.updatedAt)
+  const now = new Date()
+  const diffMs = now - lastActiveDate
+  const diffMins = Math.floor(diffMs / 60000)
+
+  let lastActive
+  if (diffMins < 1) lastActive = "Just now"
+  else if (diffMins < 60) lastActive = `${diffMins} min ago`
+  else if (diffMins < 1440) lastActive = `${Math.floor(diffMins / 60)} hour ago`
+  else lastActive = `${Math.floor(diffMins / 1440)} day ago`
+
+  return {
+    id: room._id,
+    name: room.name,
+    language: room.language,
+    usersOnline: 0,
+    lastActive,
+    isLive: true,
+    type: room.type,
+  }
+}
+
 export function RoomsPage({ onJoinRoom, filterType }) {
   const [statusFilter, setStatusFilter] = useState("all")
   const [languageFilter, setLanguageFilter] = useState("All Languages")
+  const [allRooms, setAllRooms] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const isInterviewPage = filterType === "interview"
 
+  // ✅ Backend se rooms fetch karo
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        const { rooms } = await getRooms()
+        setAllRooms(rooms.map(formatRoom))
+      } catch (error) {
+        console.error("Failed to fetch rooms:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRooms()
+  }, [])
+
   const filteredRooms = useMemo(() => {
     return allRooms.filter((room) => {
-      // ✅ Type filter
       if (filterType === "collaboration" && room.type !== "collaboration") return false
       if (filterType === "interview" && room.type !== "interview") return false
 
-      // Status filter
       if (statusFilter === "live" && !room.isLive) return false
       if (statusFilter === "saved" && room.isLive) return false
 
-      // Language filter (only for collaboration)
       if (
         !isInterviewPage &&
         languageFilter !== "All Languages" &&
@@ -170,7 +87,7 @@ export function RoomsPage({ onJoinRoom, filterType }) {
 
       return true
     })
-  }, [statusFilter, languageFilter, filterType])
+  }, [allRooms, statusFilter, languageFilter, filterType])
 
   return (
     <div className="flex-1 overflow-auto p-6 space-y-6">
@@ -252,8 +169,12 @@ export function RoomsPage({ onJoinRoom, filterType }) {
         </span>
       </div>
 
-      {/* Rooms Grid */}
-      {filteredRooms.length > 0 ? (
+      {/* Loading */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filteredRooms.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredRooms.map((room) => (
             <RoomCard

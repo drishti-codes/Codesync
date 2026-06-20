@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { AuthPage } from "@/components/auth-page"
 import { Sidebar } from "@/components/sidebar"
 import { TopNavbar } from "@/components/top-navbar"
@@ -12,27 +12,44 @@ import { FeedbackPage } from "@/components/feedback/feedback-page"
 import { ProfilePage } from "@/components/profile-page"
 import { SettingsPage } from "@/components/settings-page"
 import { RoomsPage } from "@/components/rooms-page"
+import { createRoom } from "@/lib/api"
 
 export default function Home() {
   const [view, setView] = useState("auth")
   const [activeTab, setActiveTab] = useState("dashboard")
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [currentRoom, setCurrentRoom] = useState(null)
+  const [user, setUser] = useState(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
-  const userName = "Arjun"
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    const savedUser = localStorage.getItem("user")
 
-  const handleLogin = useCallback(() => {
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser))
+      setView("dashboard")
+    }
+    setCheckingAuth(false)
+  }, [])
+
+  const userName = user?.name || "Arjun"
+
+  const handleLogin = useCallback((userData) => {
+    setUser(userData)
     setView("dashboard")
   }, [])
 
   const handleLogout = useCallback(() => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    setUser(null)
     setView("auth")
     setActiveTab("dashboard")
     setCurrentRoom(null)
   }, [])
 
   const handleJoinRoom = useCallback((room) => {
-    // ✅ room object ya roomId dono handle karo
     const roomData = typeof room === "object" ? room : {
       id: room,
       name: "Algorithm Practice",
@@ -49,23 +66,34 @@ export default function Home() {
     }
   }, [])
 
-  const handleCreateRoom = useCallback((roomData) => {
-    const newRoom = {
-      id: Date.now().toString(),
+  const handleCreateRoom = useCallback(async (roomData) => {
+  try {
+    const { room } = await createRoom({
       name: roomData.name,
-      language: roomData.language || "JavaScript",
       type: roomData.type,
-    }
+      language: roomData.language || "JavaScript",
+      isPublic: roomData.isPublic,
+      allowExecution: roomData.allowExecution,
+    })
 
-    setCurrentRoom(newRoom)
+    setCurrentRoom({
+      id: room._id,
+      name: room.name,
+      language: room.language,
+      type: room.type,
+    })
     setShowCreateModal(false)
 
-    if (roomData.type === "interview") {
+    if (room.type === "interview") {
       setView("interview")
     } else {
       setView("editor")
     }
-  }, [])
+  } catch (error) {
+    console.error("Room creation failed:", error)
+    alert("Failed to create room: " + error.message)
+  }
+}, [])
 
   const handleLeaveRoom = useCallback(() => {
     if (currentRoom?.type === "interview") {
@@ -81,12 +109,18 @@ export default function Home() {
     setView("dashboard")
   }, [])
 
-  // Auth view
+  if (checkingAuth) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   if (view === "auth") {
     return <AuthPage onLogin={handleLogin} />
   }
 
-  // Collaborative Editor view
   if (view === "editor" && currentRoom) {
     return (
       <EditorPage
@@ -98,7 +132,6 @@ export default function Home() {
     )
   }
 
-  // Interview Editor view
   if (view === "interview" && currentRoom) {
     return (
       <InterviewEditorPage
@@ -110,7 +143,6 @@ export default function Home() {
     )
   }
 
-  // Feedback view
   if (view === "feedback" && currentRoom) {
     return (
       <FeedbackPage
@@ -122,7 +154,6 @@ export default function Home() {
     )
   }
 
-  // Dashboard view
   return (
     <div className="h-screen flex bg-background">
       {/* Sidebar */}
@@ -142,6 +173,7 @@ export default function Home() {
           onProfileClick={() => setActiveTab("profile")}
           onSettingsClick={() => setActiveTab("settings")}
           onJoinRoom={handleJoinRoom}
+          onLogout={handleLogout}
         />
 
         {/* Page content */}
@@ -153,13 +185,11 @@ export default function Home() {
             onCreateRoom={() => setShowCreateModal(true)}
           />
         ) : activeTab === "rooms" ? (
-          // ✅ Collaboration rooms only
           <RoomsPage
             onJoinRoom={handleJoinRoom}
             filterType="collaboration"
           />
         ) : activeTab === "interviews" ? (
-          // ✅ Interview rooms only
           <RoomsPage
             onJoinRoom={handleJoinRoom}
             filterType="interview"
