@@ -21,7 +21,7 @@ const mockCursors = [
   { userId: "3", userName: "Mike", color: "#34d399", position: { lineNumber: 15, column: 22 } },
 ]
 
-// ✅ Language ke hisaab se default code
+// ✅ Language ke hisaab se default code — 12 languages
 const defaultCodeByLanguage = {
   JavaScript: `// Welcome to CodeSync!
 // Start coding collaboratively with your team
@@ -32,6 +32,18 @@ function fibonacci(n) {
 }
 
 const result = fibonacci(10);
+console.log("Fibonacci(10) =", result);
+`,
+
+  TypeScript: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+function fibonacci(n: number): number {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+const result: number = fibonacci(10);
 console.log("Fibonacci(10) =", result);
 `,
 
@@ -81,16 +93,20 @@ int main() {
 }
 `,
 
-  TypeScript: `// Welcome to CodeSync!
+  C: `// Welcome to CodeSync!
 // Start coding collaboratively with your team
 
-function fibonacci(n: number): number {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
+#include <stdio.h>
+
+int fibonacci(int n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-const result: number = fibonacci(10);
-console.log("Fibonacci(10) =", result);
+int main() {
+    printf("Fibonacci(10) = %d\\n", fibonacci(10));
+    return 0;
+}
 `,
 
   Go: `// Welcome to CodeSync!
@@ -128,10 +144,64 @@ fn main() {
     println!("Fibonacci(10) = {}", result);
 }
 `,
+
+  Ruby: `# Welcome to CodeSync!
+# Start coding collaboratively with your team
+
+def fibonacci(n)
+  return n if n <= 1
+  fibonacci(n - 1) + fibonacci(n - 2)
+end
+
+result = fibonacci(10)
+puts "Fibonacci(10) = #{result}"
+`,
+
+  PHP: `<?php
+// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+function fibonacci($n) {
+    if ($n <= 1) return $n;
+    return fibonacci($n - 1) + fibonacci($n - 2);
+}
+
+$result = fibonacci(10);
+echo "Fibonacci(10) = " . $result . "\\n";
+`,
+
+  "C#": `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+using System;
+
+class Program {
+    static int Fibonacci(int n) {
+        if (n <= 1) return n;
+        return Fibonacci(n - 1) + Fibonacci(n - 2);
+    }
+
+    static void Main() {
+        Console.WriteLine("Fibonacci(10) = " + Fibonacci(10));
+    }
+}
+`,
+
+  Kotlin: `// Welcome to CodeSync!
+// Start coding collaboratively with your team
+
+fun fibonacci(n: Int): Int {
+    if (n <= 1) return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fun main() {
+    println("Fibonacci(10) = \${fibonacci(10)}")
+}
+`,
 }
 
 export function EditorPage({ roomId, roomName, language, onLeave }) {
-  // ✅ Language ke hisaab se default code select karo
   const initialCode = defaultCodeByLanguage[language] || defaultCodeByLanguage.JavaScript
 
   const [code, setCode] = useState(initialCode)

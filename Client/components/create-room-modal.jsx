@@ -15,17 +15,20 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
+// ✅ Backend ke languageMap se match karte hue 12 languages
 const languages = [
   "JavaScript",
   "TypeScript",
   "Python",
   "Java",
   "C++",
+  "C",
   "Go",
   "Rust",
   "Ruby",
   "PHP",
   "C#",
+  "Kotlin",
 ]
 
 export function CreateRoomModal({ isOpen, onClose, onCreate }) {
@@ -208,7 +211,7 @@ export function CreateRoomModal({ isOpen, onClose, onCreate }) {
                 <div>
                   <p className="font-medium text-foreground">Code Execution</p>
                   <p className="text-sm text-muted-foreground">
-                    Allow running code with Judge0 API
+                    Allow running code with Glot.io API
                   </p>
                 </div>
               </div>
