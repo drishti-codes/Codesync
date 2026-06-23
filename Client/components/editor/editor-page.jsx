@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { EditorNavbar } from "./editor-navbar"
 import { EditorSidebar } from "./editor-sidebar"
 import { CodeEditor } from "./code-editor"
@@ -8,18 +8,9 @@ import { CollabPanel } from "./collab-panel"
 import { OutputPanel } from "./output-panel"
 import { VersionHistory } from "./version-history"
 import { executeCode } from "@/lib/api"
+import { connectSocket, disconnectSocket } from "@/lib/socket"
 
-const mockUsers = [
-  { id: "1", name: "Arjun", color: "#e85d75", isAdmin: true, isOnline: true },
-  { id: "2", name: "Sarah", color: "#60a5fa", isOnline: true },
-  { id: "3", name: "Mike", color: "#34d399", isOnline: true },
-  { id: "4", name: "John", color: "#f59e0b", isOnline: false },
-]
-
-const mockCursors = [
-  { userId: "2", userName: "Sarah", color: "#60a5fa", position: { lineNumber: 8, column: 15 } },
-  { userId: "3", userName: "Mike", color: "#34d399", position: { lineNumber: 15, column: 22 } },
-]
+const mockCursors = []
 
 // ✅ Language ke hisaab se default code — 12 languages
 const defaultCodeByLanguage = {
@@ -34,22 +25,15 @@ function fibonacci(n) {
 const result = fibonacci(10);
 console.log("Fibonacci(10) =", result);
 `,
-
   TypeScript: `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 function fibonacci(n: number): number {
   if (n <= 1) return n;
   return fibonacci(n - 1) + fibonacci(n - 2);
 }
-
 const result: number = fibonacci(10);
 console.log("Fibonacci(10) =", result);
 `,
-
   Python: `# Welcome to CodeSync!
-# Start coding collaboratively with your team
-
 def fibonacci(n):
     if n <= 1:
         return n
@@ -58,148 +42,100 @@ def fibonacci(n):
 result = fibonacci(10)
 print("Fibonacci(10) =", result)
 `,
-
   Java: `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 public class Main {
     static int fibonacci(int n) {
         if (n <= 1) return n;
         return fibonacci(n - 1) + fibonacci(n - 2);
     }
-
     public static void main(String[] args) {
-        int result = fibonacci(10);
-        System.out.println("Fibonacci(10) = " + result);
+        System.out.println("Fibonacci(10) = " + fibonacci(10));
     }
 }
 `,
-
   "C++": `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 #include <iostream>
 using namespace std;
-
 int fibonacci(int n) {
     if (n <= 1) return n;
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
-
 int main() {
-    int result = fibonacci(10);
-    cout << "Fibonacci(10) = " << result << endl;
+    cout << "Fibonacci(10) = " << fibonacci(10) << endl;
     return 0;
 }
 `,
-
   C: `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 #include <stdio.h>
-
 int fibonacci(int n) {
     if (n <= 1) return n;
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
-
 int main() {
     printf("Fibonacci(10) = %d\\n", fibonacci(10));
     return 0;
 }
 `,
-
   Go: `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 package main
-
 import "fmt"
-
 func fibonacci(n int) int {
-	if n <= 1 {
-		return n
-	}
+	if n <= 1 { return n }
 	return fibonacci(n-1) + fibonacci(n-2)
 }
-
 func main() {
-	result := fibonacci(10)
-	fmt.Println("Fibonacci(10) =", result)
+	fmt.Println("Fibonacci(10) =", fibonacci(10))
 }
 `,
-
   Rust: `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 fn fibonacci(n: u32) -> u32 {
-    if n <= 1 {
-        return n;
-    }
+    if n <= 1 { return n; }
     fibonacci(n - 1) + fibonacci(n - 2)
 }
-
 fn main() {
-    let result = fibonacci(10);
-    println!("Fibonacci(10) = {}", result);
+    println!("Fibonacci(10) = {}", fibonacci(10));
 }
 `,
-
   Ruby: `# Welcome to CodeSync!
-# Start coding collaboratively with your team
-
 def fibonacci(n)
   return n if n <= 1
   fibonacci(n - 1) + fibonacci(n - 2)
 end
-
-result = fibonacci(10)
-puts "Fibonacci(10) = #{result}"
+puts "Fibonacci(10) = #{fibonacci(10)}"
 `,
-
   PHP: `<?php
-// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 function fibonacci($n) {
     if ($n <= 1) return $n;
     return fibonacci($n - 1) + fibonacci($n - 2);
 }
-
-$result = fibonacci(10);
-echo "Fibonacci(10) = " . $result . "\\n";
+echo "Fibonacci(10) = " . fibonacci(10) . "\\n";
 `,
-
   "C#": `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 using System;
-
 class Program {
     static int Fibonacci(int n) {
         if (n <= 1) return n;
         return Fibonacci(n - 1) + Fibonacci(n - 2);
     }
-
     static void Main() {
         Console.WriteLine("Fibonacci(10) = " + Fibonacci(10));
     }
 }
 `,
-
   Kotlin: `// Welcome to CodeSync!
-// Start coding collaboratively with your team
-
 fun fibonacci(n: Int): Int {
     if (n <= 1) return n
     return fibonacci(n - 1) + fibonacci(n - 2)
 }
-
 fun main() {
     println("Fibonacci(10) = \${fibonacci(10)}")
 }
 `,
 }
+
+// ✅ Random color for user cursor
+const userColors = ["#e85d75", "#60a5fa", "#34d399", "#f59e0b", "#a78bfa", "#f97316"]
+const getRandomColor = () => userColors[Math.floor(Math.random() * userColors.length)]
 
 export function EditorPage({ roomId, roomName, language, onLeave }) {
   const initialCode = defaultCodeByLanguage[language] || defaultCodeByLanguage.JavaScript
@@ -214,6 +150,95 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
   const [runtime, setRuntime] = useState(undefined)
   const [memory, setMemory] = useState(undefined)
   const [shareMessage, setShareMessage] = useState(null)
+
+  // ✅ Real users + messages
+  const [users, setUsers] = useState([])
+  const [messages, setMessages] = useState([])
+  const [cursors, setCursors] = useState([])
+
+  const socketRef = useRef(null)
+  const isRemoteChange = useRef(false)
+
+  // ✅ Socket.io connection
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user")
+    if (!savedUser) return
+
+    const user = JSON.parse(savedUser)
+    const userWithColor = { ...user, color: getRandomColor() }
+
+    const socket = connectSocket()
+    socketRef.current = socket
+
+    // Room join karo
+    socket.emit("join-room", { roomId, user: userWithColor })
+
+    // ✅ Users list update
+    socket.on("room-users", (roomUsers) => {
+      setUsers(roomUsers)
+    })
+
+    // ✅ Real-time code sync
+    socket.on("code-update", (newCode) => {
+      isRemoteChange.current = true
+      setCode(newCode)
+    })
+
+    // ✅ Chat messages
+    socket.on("new-message", (message) => {
+      setMessages(prev => [...prev, message])
+    })
+
+    // ✅ Cursor positions
+    socket.on("cursor-update", (cursorData) => {
+      setCursors(prev => {
+        const others = prev.filter(c => c.userId !== cursorData.userId)
+        return [...others, cursorData]
+      })
+    })
+
+    // ✅ User joined notification
+    socket.on("user-joined", (joinedUser) => {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        system: true,
+        text: `${joinedUser?.name || "Someone"} joined the room`,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      }])
+    })
+
+    // ✅ User left notification
+    socket.on("user-left", (leftUser) => {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        system: true,
+        text: `${leftUser?.name || "Someone"} left the room`,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      }])
+      setCursors(prev => prev.filter(c => c.userId !== leftUser?.id))
+    })
+
+    return () => {
+      socket.off("room-users")
+      socket.off("code-update")
+      socket.off("new-message")
+      socket.off("cursor-update")
+      socket.off("user-joined")
+      socket.off("user-left")
+      disconnectSocket()
+    }
+  }, [roomId])
+
+  // ✅ Code change → Socket se broadcast karo
+  const handleCodeChange = useCallback((newCode) => {
+    if (isRemoteChange.current) {
+      isRemoteChange.current = false
+      setCode(newCode)
+      return
+    }
+    setCode(newCode)
+    socketRef.current?.emit("code-change", { roomId, code: newCode })
+  }, [roomId])
 
   const handleRunCode = useCallback(async () => {
     setIsRunning(true)
@@ -252,6 +277,23 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
     setTimeout(() => setShareMessage(null), 3000)
   }, [roomId])
 
+  const handleSendMessage = useCallback((message) => {
+    const savedUser = localStorage.getItem("user")
+    if (!savedUser) return
+    const user = JSON.parse(savedUser)
+
+    const msgData = {
+      id: Date.now().toString(),
+      userId: user.id,
+      userName: user.name,
+      userColor: "#60a5fa",
+      content: message,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }
+
+    socketRef.current?.emit("send-message", { roomId, message: msgData })
+  }, [roomId])
+
   const handleRestoreVersion = useCallback((versionId) => {
     console.log("Restoring version:", versionId)
     setShowVersionHistory(false)
@@ -262,7 +304,7 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
       {/* Top Navbar */}
       <EditorNavbar
         roomName={roomName}
-        users={mockUsers}
+        users={users.length > 0 ? users : []}
         isRunning={isRunning}
         isDarkTheme={isDarkTheme}
         shareMessage={shareMessage}
@@ -286,8 +328,8 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
           <CodeEditor
             language={language}
             code={code}
-            onChange={setCode}
-            cursors={mockCursors}
+            onChange={handleCodeChange}
+            cursors={cursors}
           />
 
           {/* Output Panel */}
@@ -303,8 +345,10 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
 
         {/* Right Collab Panel */}
         <CollabPanel
-          users={mockUsers}
-          currentUserId="1"
+          users={users}
+          currentUserId={JSON.parse(localStorage.getItem("user") || "{}").id}
+          messages={messages}
+          onSendMessage={handleSendMessage}
         />
       </div>
 
