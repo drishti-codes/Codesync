@@ -30,11 +30,17 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 })
 
-// ===== GET ALL ROOMS (user's rooms) =====
+// ===== GET ALL ROOMS (rooms user created OR joined) =====
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const rooms = await Room.find({ createdBy: req.userId })
-      .sort({ updatedAt: -1 })
+    const rooms = await Room.find({
+      $or: [
+        { createdBy: req.userId },
+        { participants: req.userId },
+        { interviewerId: req.userId },
+        { candidateId: req.userId },
+      ],
+    }).sort({ updatedAt: -1 })
 
     res.json({ rooms })
   } catch (error) {
@@ -81,7 +87,7 @@ router.patch("/:id/code", authMiddleware, async (req, res) => {
   }
 })
 
-// ===== JOIN AS CANDIDATE (interview) =====
+// ===== JOIN ROOM (collaboration participant OR interview candidate) =====
 router.patch("/:id/join", authMiddleware, async (req, res) => {
   try {
     const room = await Room.findById(req.params.id)
@@ -90,9 +96,22 @@ router.patch("/:id/join", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Room not found" })
     }
 
-    if (room.type === "interview" && !room.candidateId) {
-      room.candidateId = req.userId
-      await room.save()
+    if (room.type === "interview") {
+      if (!room.candidateId) {
+        room.candidateId = req.userId
+        await room.save()
+      }
+    } else {
+      // ✅ Collaboration room — creator ke alawa joining wale ko participants mein add karo
+      const isCreator = room.createdBy.toString() === req.userId
+      const alreadyParticipant = room.participants.some(
+        (p) => p.toString() === req.userId
+      )
+
+      if (!isCreator && !alreadyParticipant) {
+        room.participants.push(req.userId)
+        await room.save()
+      }
     }
 
     res.json({ room })

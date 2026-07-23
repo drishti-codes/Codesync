@@ -33,6 +33,13 @@ const roomSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // ✅ Collaboration rooms ke joiners yahan track honge (creator ke alawa)
+    participants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     // Interview-specific fields
     problemId: {
       type: Number,

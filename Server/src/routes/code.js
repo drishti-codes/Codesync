@@ -4,18 +4,37 @@ const authMiddleware = require("../middleware/auth")
 
 const router = express.Router()
 
-// Language mapping for Piston API
+// ✅ 12 languages — "10+ programming languages" ko sach banane ke liye
 const languageMap = {
-  JavaScript: { language: "javascript", version: "18.15.0" },
-  Python: { language: "python", version: "3.10.0" },
-  Java: { language: "java", version: "15.0.2" },
-  "C++": { language: "cpp", version: "10.2.0" },
-  TypeScript: { language: "typescript", version: "5.0.3" },
-  Go: { language: "go", version: "1.16.2" },
-  Rust: { language: "rust", version: "1.50.0" },
+  JavaScript: "javascript",
+  TypeScript: "typescript",
+  Python: "python",
+  Java: "java",
+  "C++": "cpp",
+  "C": "c",
+  Go: "go",
+  Rust: "rust",
+  Ruby: "ruby",
+  PHP: "php",
+  "C#": "csharp",
+  Kotlin: "kotlin",
 }
 
-// ===== EXECUTE CODE =====
+const fileNames = {
+  javascript: "main.js",
+  typescript: "main.ts",
+  python: "main.py",
+  java: "Main.java",
+  cpp: "main.cpp",
+  c: "main.c",
+  go: "main.go",
+  rust: "main.rs",
+  ruby: "main.rb",
+  php: "main.php",
+  csharp: "main.cs",
+  kotlin: "main.kt",
+}
+
 router.post("/execute", authMiddleware, async (req, res) => {
   try {
     const { code, language, stdin } = req.body
@@ -24,30 +43,39 @@ router.post("/execute", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Code and language are required" })
     }
 
-    const langConfig = languageMap[language]
-    if (!langConfig) {
+    const lang = languageMap[language]
+    if (!lang) {
       return res.status(400).json({ message: "Language not supported" })
     }
 
     const response = await axios.post(
-      "https://emkc.org/api/v2/piston/execute",
+      `https://glot.io/api/run/${lang}/latest`,
       {
-        language: langConfig.language,
-        version: langConfig.version,
-        files: [{ content: code }],
+        files: [
+          {
+            name: fileNames[lang],
+            content: code,
+          },
+        ],
         stdin: stdin || "",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Token ${process.env.GLOT_TOKEN}`,
+        },
       }
     )
 
-    const result = response.data.run
+    const result = response.data
 
     res.json({
       output: result.stdout || "",
-      error: result.stderr || "",
-      exitCode: result.code,
+      error: result.stderr || result.error || "",
+      exitCode: 0,
     })
   } catch (error) {
-    console.error(error)
+    console.error(error?.response?.data || error.message)
     res.status(500).json({ message: "Code execution failed" })
   }
 })
