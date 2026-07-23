@@ -66,47 +66,72 @@ export function CollabPanel({ users, currentUserId, messages = [], onSendMessage
         {/* ✅ Chat Tab — real messages */}
         {activeTab === "chat" && (
           <>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center mt-4">
                   No messages yet. Start the conversation!
                 </p>
               )}
-              {messages.map((msg) => (
-                <div key={msg.id}>
-                  {/* ✅ System message (joined/left) */}
-                  {msg.system ? (
-                    <div className="flex items-center justify-center">
+              {messages.map((msg) => {
+                if (msg.system) {
+                  return (
+                    <div key={msg.id} className="flex items-center justify-center">
                       <span className="text-xs text-muted-foreground bg-secondary px-3 py-1 rounded-full">
                         {msg.text}
                       </span>
                     </div>
-                  ) : (
-                    /* ✅ Normal chat message */
-                    <div className="flex gap-3">
+                  )
+                }
+
+                const isOwnMessage = msg.userId === currentUserId
+                const bubbleColor = msg.userColor || "#60a5fa"
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "flex gap-2 max-w-[85%]",
+                      isOwnMessage ? "ml-auto flex-row-reverse" : "mr-auto"
+                    )}
+                  >
+                    {/* Avatar */}
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium text-primary-foreground shrink-0"
+                      style={{ backgroundColor: bubbleColor }}
+                    >
+                      {msg.userName?.charAt(0).toUpperCase()}
+                    </div>
+
+                    {/* Bubble */}
+                    <div className={cn("min-w-0", isOwnMessage ? "items-end" : "items-start", "flex flex-col")}>
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-primary-foreground shrink-0"
-                        style={{ backgroundColor: msg.userColor || "#60a5fa" }}
+                        className={cn(
+                          "flex items-baseline gap-2",
+                          isOwnMessage && "flex-row-reverse"
+                        )}
                       >
-                        {msg.userName?.charAt(0).toUpperCase()}
+                        <span className="font-medium text-foreground text-xs">
+                          {isOwnMessage ? "You" : msg.userName}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {msg.timestamp}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-medium text-foreground text-sm">
-                            {msg.userName}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {msg.timestamp}
-                          </span>
-                        </div>
-                        <p className="text-sm text-foreground/90 mt-0.5 break-words">
-                          {msg.content}
-                        </p>
+                      <div
+                        className={cn(
+                          "mt-1 px-3 py-1.5 rounded-2xl text-sm break-words",
+                          isOwnMessage
+                            ? "rounded-tr-sm text-white"
+                            : "rounded-tl-sm text-foreground bg-secondary"
+                        )}
+                        style={isOwnMessage ? { backgroundColor: bubbleColor } : undefined}
+                      >
+                        {msg.content}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                )
+              })}
               <div ref={chatEndRef} />
             </div>
 

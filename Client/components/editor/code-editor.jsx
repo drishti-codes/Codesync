@@ -100,7 +100,7 @@ export function CodeEditor({ language, code, onChange, cursors }) {
       <Editor
         height="calc(100% - 36px)"
         language={language.toLowerCase()}
-        value={code || defaultCode}
+        value={code ?? defaultCode}
         onChange={(value) => onChange(value || "")}
         onMount={handleEditorMount}
         theme="vs-dark"

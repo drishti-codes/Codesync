@@ -63,6 +63,17 @@ export async function getRoom(roomId) {
   return data
 }
 
+// ===== JOIN ROOM (registers current user as participant/candidate) =====
+export async function joinRoom(roomId) {
+  const res = await fetch(`${API_URL}/rooms/${roomId}/join`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  return data
+}
+
 // ===== UPDATE ROOM CODE =====
 export async function updateRoomCode(roomId, code) {
   const res = await fetch(`${API_URL}/rooms/${roomId}/code`, {

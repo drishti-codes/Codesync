@@ -158,6 +158,8 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
 
   const socketRef = useRef(null)
   const isRemoteChange = useRef(false)
+  // ✅ Apna assigned color yahan store karo taaki handleSendMessage bhi use kar sake
+  const myColorRef = useRef("#60a5fa")
 
   // ✅ Socket.io connection
   useEffect(() => {
@@ -165,7 +167,9 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
     if (!savedUser) return
 
     const user = JSON.parse(savedUser)
-    const userWithColor = { ...user, color: getRandomColor() }
+    const myColor = getRandomColor()
+    myColorRef.current = myColor
+    const userWithColor = { ...user, color: myColor }
 
     const socket = connectSocket()
     socketRef.current = socket
@@ -286,7 +290,7 @@ export function EditorPage({ roomId, roomName, language, onLeave }) {
       id: Date.now().toString(),
       userId: user.id,
       userName: user.name,
-      userColor: "#60a5fa",
+      userColor: myColorRef.current,
       content: message,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }

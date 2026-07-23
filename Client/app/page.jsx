@@ -12,7 +12,7 @@ import { FeedbackPage } from "@/components/feedback/feedback-page"
 import { ProfilePage } from "@/components/profile-page"
 import { SettingsPage } from "@/components/settings-page"
 import { RoomsPage } from "@/components/rooms-page"
-import { createRoom } from "@/lib/api"
+import { createRoom, getRoom, joinRoom } from "@/lib/api"
 
 export default function Home() {
   const [view, setView] = useState("auth")
@@ -49,20 +49,42 @@ export default function Home() {
     setCurrentRoom(null)
   }, [])
 
-  const handleJoinRoom = useCallback((room) => {
-    const roomData = typeof room === "object" ? room : {
-      id: room,
-      name: "Algorithm Practice",
-      language: "JavaScript",
-      type: "collaboration",
+  // ✅ FIXED: sirf roomId (string) milne par backend se real room fetch karta hai
+  // aur backend mein participant ke roop mein register bhi karta hai
+  const handleJoinRoom = useCallback(async (room) => {
+    if (typeof room === "object") {
+      setCurrentRoom(room)
+      if (room.type === "interview") {
+        setView("interview")
+      } else {
+        setView("editor")
+      }
+      return
     }
 
-    setCurrentRoom(roomData)
+    // room yahan sirf ek roomId string hai (link se join kiya gaya)
+    try {
+      const { room: roomData } = await getRoom(room)
 
-    if (roomData.type === "interview") {
-      setView("interview")
-    } else {
-      setView("editor")
+      // ✅ Backend mein user ko participant/candidate ke roop mein register karo
+      await joinRoom(room)
+
+      const mappedRoom = {
+        id: roomData._id,
+        name: roomData.name,
+        language: roomData.language,
+        type: roomData.type,
+      }
+      setCurrentRoom(mappedRoom)
+
+      if (mappedRoom.type === "interview") {
+        setView("interview")
+      } else {
+        setView("editor")
+      }
+    } catch (error) {
+      console.error("Failed to join room:", error)
+      alert("Failed to join room: " + error.message)
     }
   }, [])
 
